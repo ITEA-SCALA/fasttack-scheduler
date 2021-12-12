@@ -4,14 +4,22 @@ import akka.actor.{Actor, ActorLogging, Props}
 import com.example.data._
 import com.example.repository._
 import java.time._
-import akka.pattern.{ pipe }
+import akka.pattern.pipe
+import com.example.config.Environment
+import com.example.routes._
+import com.example.utils.FileUtil.saveToFile
+import com.example.utils.FileUtil.loadFromFile
+import com.example.utils.Base64UrlValidUtil
+import java.sql.Timestamp
+import scala.concurrent.Future
+import scala.sys.exit
 
 
 object TaskService {
   def props: Props = Props[TaskService]
-  final case class DeviceInfo(name: String, taskRepository: TaskRepository, deviceInfoRepository: DeviceInfoRepository, tmpDeviceInfoRepository: TmpDeviceInfoRepository)
-  case class Created(res: Task)
-  var count: Int = 1
+  final case class FixBase64Decode(startedAt: Timestamp, schedulerExpression: String, listDeviceInfo: Seq[DeviceInfo], taskRepository: TaskRepository, deviceInfoRepository: DeviceInfoRepository, tmpDeviceInfoRepository: TmpDeviceInfoRepository)
+  var seqSchedulerTask: Int = loadFromFile.toInt
+  var seqSchedulerPerTask: Int = 0
 }
 
 class TaskService extends Actor with ActorLogging {
@@ -19,21 +27,39 @@ class TaskService extends Actor with ActorLogging {
   import context.dispatcher
 
   def receive: Receive = {
-    case DeviceInfo(name, taskRepository, deviceInfoRepository, tmpDeviceInfoRepository) =>
+    case FixBase64Decode(startedAt, schedulerExpression, listDeviceInfo, taskRepository, deviceInfoRepository, tmpDeviceInfoRepository) =>
       for {
-        findDeviceInfo <- deviceInfoRepository.find("DNITHE000302000000000777").map(o => o.head)
-        createTmp <- tmpDeviceInfoRepository.create(findDeviceInfo)
-        createTask <- taskRepository.create( RequestTask(findDeviceInfo.tokenRefId, findDeviceInfo.deviceName) )
-      } yield log.info(s"$findDeviceInfo")
+        deviceInfo          <- deviceInfoRepository.findAll(seqSchedulerTask, 1).map(o => o.head)
+        decode              <- Future {
+            deviceInfo.deviceName.map { o =>
+              val (actionDecode, statusDecode) = Base64UrlValidUtil.isDecode(o)
+              val fixDeviceName: Option[String] = Option(Base64UrlValidUtil.decode(o, actionDecode))
+              (fixDeviceName, actionDecode, statusDecode)
+            }
+          }
+        createTmpDeviceInfo <- tmpDeviceInfoRepository.create(deviceInfo) // TODO: TmpDeviceInfo is manual create as SQL-script
+        createTask          <- {
+          val (fixDeviceName, actionDecode, statusDecode) = decode.head
+          val deviceInfoDto: DeviceInfoDto = DeviceInfoDto(deviceInfo.tokenRefId, deviceInfo.deviceName, fixDeviceName)
+          val taskDto: TaskDto = TaskDto(deviceInfoDto, listDeviceInfo.length, seqSchedulerTask, schedulerExpression, statusDecode, startedAt)
+          taskRepository.create( Mapper(taskDto) )
+        }
+      } yield {
+        val (fixDeviceName, actionDecode, statusDecode) = decode.head
+        log.info(s"$createTask")
+        if (actionDecode) {
+          deviceInfoRepository.update( deviceInfo.copy(deviceName=fixDeviceName) )
+          log.info(s"Success updated DeviceInfo Table by ID=${deviceInfo.tokenRefId}")
+        }
+      }
 
-//  def receive: Receive = {
-//    case DeviceInfo(name, taskRepository, deviceInfoRepository, tmpDeviceInfoRepository) =>
-//      val receiver = self
-//      taskRepository.create( RequestTask(s"$name-$count", s"${LocalDateTime.now()}") )
-//        .map(res => Created(res)) pipeTo receiver
-//
-//    case Created(res) =>
-//      log.info(s"onComplete: ${res}") // TODO: действие на боевой базе данных...
-//      count = count + 1
+      if (
+        listDeviceInfo.length < seqSchedulerTask
+        || Environment.maxPerTask.toInt <= seqSchedulerPerTask
+      ) exit(0)
+
+      seqSchedulerTask += 1
+      seqSchedulerPerTask += 1
+      saveToFile(seqSchedulerTask.toString)
     }
 }

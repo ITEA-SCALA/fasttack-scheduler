@@ -19,7 +19,7 @@ class TaskRoute(repository: TaskRepository) extends SprayJsonSupport {
 
   /*
    * GET
-   * http://localhost:8082/api/tasks/30
+   * http://localhost:8082/scheduler/tasks/30
    * ***
    * {
    *   "author": "test update author",
@@ -35,8 +35,8 @@ class TaskRoute(repository: TaskRepository) extends SprayJsonSupport {
   }
 
   /*
-   * http://localhost:8082/api/tasks/filter?author=author_19r&name=name_19
-   * http://localhost:8082/api/tasks/filter?name=name_19&author=test update author
+   * http://localhost:8082/scheduler/tasks/filter?deviceName=author_19r&tokenRefId=name_19
+   * http://localhost:8082/scheduler/tasks/filter?tokenRefId=name_19&deviceName=test update author
    * ***
    * [
    *   {
@@ -52,9 +52,9 @@ class TaskRoute(repository: TaskRepository) extends SprayJsonSupport {
    * ]
    */
   def filter: Route = path("filter") {
-    parameters('author.as[String].?, 'name.as[String].?) { (author, name) =>
+    parameters('deviceName.as[String].?, 'tokenRefId.as[String].?) { (deviceName, tokenRefId) =>
       get {
-        onSuccess(repository.filter(author, name)) (
+        onSuccess(repository.filter(deviceName, tokenRefId)) (
           complete(_))
       }
     }
@@ -62,7 +62,7 @@ class TaskRoute(repository: TaskRepository) extends SprayJsonSupport {
 
   /*
    * GET
-   * http://localhost:8082/api/tasks
+   * http://localhost:8082/scheduler/tasks
    * ***
    * {
    *    "author": "test author",
@@ -88,14 +88,14 @@ class TaskRoute(repository: TaskRepository) extends SprayJsonSupport {
    */
   def list: Route = pathEndOrSingleSlash {
     get {
-      onSuccess(repository.list) (
-        complete(_))
+      onSuccess(repository.list) ( res =>
+        complete( Response(res) ))
     }
   }
 
 /*
  * POST
- * http://localhost:8082/api/tasks
+ * http://localhost:8082/scheduler/tasks
  * {
  *   "name": "test name",
  *   "author": "test author"
@@ -108,9 +108,9 @@ class TaskRoute(repository: TaskRepository) extends SprayJsonSupport {
  * }
  */
   def create: Route = pathEndOrSingleSlash {
-    entity(as[RequestTask]) { req =>
+    entity(as[TaskDto]) { dto =>
       post {
-        onSuccess(repository.create(req)) (
+        onSuccess(repository.create( Mapper(dto) )) (
           complete(_))
       }
     }
@@ -118,7 +118,7 @@ class TaskRoute(repository: TaskRepository) extends SprayJsonSupport {
 
   /*
    * PUT
-   * http://localhost:8082/api/tasks
+   * http://localhost:8082/scheduler/tasks
    * {
    *   "id": 30,
    *   "name": "test update name",
@@ -138,7 +138,7 @@ class TaskRoute(repository: TaskRepository) extends SprayJsonSupport {
 
 /*
  * DELETE
- * http://localhost:8082/api/tasks/30
+ * http://localhost:8082/scheduler/tasks/30
  * ***
  * {
  *    "record": 1

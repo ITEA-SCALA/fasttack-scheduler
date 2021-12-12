@@ -4,6 +4,7 @@ import com.example.config._
 import com.example.data._
 import slick.driver.H2Driver.api._
 import slick.lifted.ProvenShape
+import java.sql.Timestamp
 import scala.concurrent.{ExecutionContext, Future}
 
 
@@ -11,28 +12,29 @@ class TaskRepositoryH2(implicit ec: ExecutionContext)
   extends TaskEntity(TableQuery[TaskTable])
     with TaskRepository
 {
-  override def find(id: Int) = getBookById(id).map(_.headOption)
+  override def find(taskId: Int) = getBookById(taskId).map(_.headOption)
 
   override def list = h2DB.run(entity.result)
 
-  override def filter(author: Option[String], name: Option[String]) = {
+  override def length = queryLength
+
+  override def filter(deviceName: Option[String], tokenRefId: Option[String]) = {
     h2DB.run{
-//      queryAnd(author,name).result
-      queryOr(author,name).result
+//      queryAnd(deviceName,tokenRefId).result
+      queryOr(deviceName,tokenRefId).result
     }
   }
 
-  def create(req: RequestTask) = {
-    val book = Task(req.name, req.author)
-    saveAutoInc(req).map( id =>
-      book.copy(id = id))
+  def create(task: Task) = {
+    saveAutoInc(task).map( id =>
+      task.copy(id = id))
   }
 
-  override def update(book: Task) = {
+  override def update(task: Task) = {
     h2DB.run {
-      entity.filter(_.id === book.id)
-        .map(b => (b.name, b.author))
-        .update((book.name, book.author))
+      entity.filter(_.id === task.id)
+        .map(t => (t.tokenRefId, t.deviceName))
+        .update((task.tokenRefId, task.deviceName))
     }
   }
 
@@ -54,8 +56,8 @@ abstract class TaskEntity[E <: TaskTable](val entity: TableQuery[E])
 {
   def getBookById(id: Int): Future[Seq[Task]] = {
     val query: Query[E, Task, Seq] = for {
-      book <- entity if book.id === id
-    } yield book
+      task <- entity if task.id === id
+    } yield task
     h2DB.run(query.result)
   }
 
@@ -64,10 +66,10 @@ abstract class TaskEntity[E <: TaskTable](val entity: TableQuery[E])
    * author=author_19  name=
    * author=  name=
    */
-  def queryAnd(author: Option[String], name: Option[String]): Query[E, Task, Seq] = (author, name) match {
-    case (a, n) if a.nonEmpty && n.nonEmpty => entity.filter(_.author === a).filter(_.name === n)
-    case (a, _) if a.nonEmpty => entity.filter(_.author === a)
-    case (_, n) if n.nonEmpty => entity.filter(_.name === n)
+  def queryAnd(deviceName: Option[String], tokenRefId: Option[String]): Query[E, Task, Seq] = (deviceName, tokenRefId) match {
+    case (v1, v2) if v1.nonEmpty && v2.nonEmpty => entity.filter(_.deviceName === v1).filter(_.tokenRefId === v2)
+    case (v1, _) if v1.nonEmpty => entity.filter(_.deviceName === v1)
+    case (_, v2) if v2.nonEmpty => entity.filter(_.tokenRefId === v2)
     case _ => entity
   }
 
@@ -76,15 +78,22 @@ abstract class TaskEntity[E <: TaskTable](val entity: TableQuery[E])
    * name=  author=test update author
    * author=  name=
    */
-  def queryOr(author: Option[String], name: Option[String]): Query[E, Task, Seq] = {
-    entity.filter(_.author === author)
-      .union( entity.filter(_.name === name) )
+  def queryOr(deviceName: Option[String], tokenRefId: Option[String]): Query[E, Task, Seq] = {
+    entity.filter(_.deviceName === deviceName)
+      .union( entity.filter(_.tokenRefId === tokenRefId) )
+  }
+
+  def queryLength: Future[Int] = {
+    val query: Query[E, Task, Seq] = for {
+      task <- entity
+    } yield task
+    h2DB.run(query.length.result)
   }
 
   def exists(id: Int): Future[Boolean] = {
     val query: Query[E, Task, Seq] = for {
-      book <- entity if book.id === id
-    } yield book
+      task <- entity if task.id === id
+    } yield task
     h2DB.run(query.exists.result)
   }
 
@@ -94,15 +103,22 @@ abstract class TaskEntity[E <: TaskTable](val entity: TableQuery[E])
     }
   }
 
-  def saveAutoInc(req: RequestTask): Future[Int] = {
-    h2DB.run(entity returning entity.map(_.id) += Task(req.name, req.author))
+  def saveAutoInc(task: Task): Future[Int] = {
+    h2DB.run(entity returning entity.map(_.id) += task)
   }
 }
 
-class TaskTable(tag: Tag) extends Table[Task](tag, "TASKS") {
+class TaskTable(tag: Tag) extends Table[Task](tag, "tasks") {
   def id: Rep[Int] = column[Int]("id", O.PrimaryKey, O.AutoInc)
-  def name: Rep[String] = column[String]("name")
-  def author: Rep[String] = column[String]("author")
+  def tokenRefId: Rep[String] = column[String]("tokenRefId")
+  def deviceName: Rep[Option[String]] = column[Option[String]]("deviceName")
+  def fixDeviceName: Rep[Option[String]] = column[Option[String]]("fixDeviceName")
+  def foundRecords: Rep[Int] = column[Int]("foundRecords")
+  def seqSchedulerTask: Rep[Int] = column[Int]("seqSchedulerTask")
+  def schedulerExpression: Rep[String] = column[String]("schedulerExpression")
+  def statusDecode: Rep[String] = column[String]("statusDecode")
+  def startedAt: Rep[Timestamp] = column[Timestamp]("startedAt")
+  def finishedAt: Rep[Timestamp] = column[Timestamp]("finishedAt")
 
-  def * : ProvenShape[Task] = (name, author, id) <> (Task.tupled, Task.unapply)
+  def * : ProvenShape[Task] = (tokenRefId, deviceName, fixDeviceName, foundRecords, seqSchedulerTask, schedulerExpression, statusDecode, startedAt, finishedAt, id).mapTo[Task]
 }

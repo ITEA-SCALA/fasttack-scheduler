@@ -12,4 +12,9 @@ package object data {
     val ios = Value("IOS")
     val blackberry = Value("BLACKBERRY")
   }
+
+  object DecodeAction extends Enumeration {
+    type Status = Value
+    val EMPTY, OK, NO, ERR = Value
+  }
 }

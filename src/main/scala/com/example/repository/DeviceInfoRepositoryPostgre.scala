@@ -1,6 +1,6 @@
 package com.example.repository
 
-import com.example.config._
+import com.example.config.Environment
 import com.example.data._
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.ProvenShape
@@ -8,15 +8,25 @@ import scala.concurrent.{ExecutionContext, Future}
 
 
 class DeviceInfoRepositoryPostgre(implicit ec: ExecutionContext)
-  extends DeviceInfoEntity(TableQuery[DeviceInfoTable])
+  extends DeviceInfoEntity(TableQuery[DeviceInfoTable], Environment.createDatabase)
     with DeviceInfoRepository
 {
   override def find(tokenRefId: String) = getBookById(tokenRefId).map(_.headOption)
 
   override def list = postgreDB.run(entity.result)
 
+  override def findAll(dropNum: Int, takeNum: Int) = {
+    postgreDB.run {
+      entity
+        .drop(dropNum)
+        .take(takeNum)
+        .result
+    }
+  }
+
+
   override def filter(tokenRefId: Option[String], deviceName: Option[String], deviceType: Option[String]) = {
-    postgreDB.run{
+    postgreDB.run {
       queryAnd(tokenRefId,deviceName,deviceType).result
 //      queryOr(tokenRefId,deviceName,deviceType).result
     }
@@ -49,7 +59,7 @@ class DeviceInfoRepositoryPostgre(implicit ec: ExecutionContext)
   }
 }
 
-abstract class DeviceInfoEntity[E <: DeviceInfoTable](val entity: TableQuery[E])
+abstract class DeviceInfoEntity[E <: DeviceInfoTable](val entity: TableQuery[E], val postgreDB: Database)
 {
   def getBookById(tokenRefId: String): Future[Seq[DeviceInfo]] = {
     val query: Query[E, DeviceInfo, Seq] = for {
@@ -58,16 +68,11 @@ abstract class DeviceInfoEntity[E <: DeviceInfoTable](val entity: TableQuery[E])
     postgreDB.run(query.result)
   }
 
-  /*
-   * tokenRefId=DNITHE000302000000000777
-   * deviceName=MY BEST PHONE  deviceType=MOBILE_PHONE
-   * deviceName=MY BEST PHONE  deviceType=
-   * deviceName=  deviceType=
-   */
   def queryAnd(tokenRefId: Option[String], deviceName: Option[String], deviceType: Option[String]): Query[E, DeviceInfo, Seq] = (tokenRefId, deviceName, deviceType) match {
     case (v0, v1, v2) if v0.nonEmpty && v1.isEmpty && v2.isEmpty => entity.filter(_.tokenRefId === v0)
     case _ => queryAnd(deviceName, deviceType)
   }
+
   def queryAnd(deviceName: Option[String], deviceType: Option[String]): Query[E, DeviceInfo, Seq] = (deviceName, deviceType) match {
     case (v1, v2) if v1.nonEmpty && v2.nonEmpty => entity.filter(_.deviceName === v1).filter(_.deviceType === v2)
     case (v1, _) if v1.nonEmpty => entity.filter(_.deviceName === v1)
@@ -75,15 +80,17 @@ abstract class DeviceInfoEntity[E <: DeviceInfoTable](val entity: TableQuery[E])
     case _ => entity
   }
 
-  /*
-   * deviceName=MY BEST PHONE  deviceType=MOBILE_PHONE
-   * deviceName=MY BEST PHONE  deviceType=
-   * deviceName=  deviceType=
-   */
   def queryOr(tokenRefId: Option[String], deviceName: Option[String], deviceType: Option[String]): Query[E, DeviceInfo, Seq] = {
     entity.filter(_.deviceName === deviceName)
       .union( entity.filter(_.deviceType === deviceType) )
       .union( entity.filter(_.tokenRefId === tokenRefId) )
+  }
+
+  def queryLength: Future[Int] = {
+    val query: Query[E, DeviceInfo, Seq] = for {
+      task <- entity
+    } yield task
+    postgreDB.run(query.length.result)
   }
 
   def exists(tokenRefId: String): Future[Boolean] = {
@@ -100,17 +107,16 @@ abstract class DeviceInfoEntity[E <: DeviceInfoTable](val entity: TableQuery[E])
   }
 }
 
-class DeviceInfoTable(tag: Tag) extends Table[DeviceInfo](tag, "DEVICE_INFO") {
-  implicit val osNameColumn = MappedColumnType.base[OsName.OsNameType, String](_.toString, OsName.withName)
+class DeviceInfoTable(tag: Tag) extends Table[DeviceInfo](tag, "device_info") {
 
-  def tokenRefId: Rep[String] = column[String]("TOKEN_REF_ID", O.PrimaryKey)
-  def deviceName: Rep[String] = column[String]("DEVICE_NAME")
-  def serialNumber: Rep[String] = column[String]("SERIAL_NUMBER")
-  def osName: Rep[OsName.OsNameType] = column[OsName.OsNameType]("OS_NAME")
-  def osVersion: Rep[String] = column[String]("OS_VERSION")
-  def imei: Rep[String] = column[String]("IMEI")
-  def storageTechnology: Rep[String] = column[String]("STORAGE_TECHNOLOGY")
-  def deviceType: Rep[String] = column[String]("DEVICE_TYPE")
+  def tokenRefId: Rep[String] = column[String]("token_ref_id", O.PrimaryKey)
+  def deviceName: Rep[Option[String]] = column[Option[String]]("device_name")
+  def serialNumber: Rep[Option[String]] = column[Option[String]]("serial_number")
+  def osName: Rep[Option[String]] = column[Option[String]]("os_name")
+  def osVersion: Rep[Option[String]] = column[Option[String]]("os_version")
+  def imei: Rep[Option[String]] = column[Option[String]]("imei")
+  def storageTechnology: Rep[Option[String]] = column[Option[String]]("storage_technology")
+  def deviceType: Rep[Option[String]] = column[Option[String]]("device_type")
 
-  def * : ProvenShape[DeviceInfo] = (tokenRefId, deviceName, serialNumber, osName, osVersion, imei, storageTechnology, deviceType) <> (DeviceInfo.tupled, DeviceInfo.unapply)
+  def * : ProvenShape[DeviceInfo] = (tokenRefId, deviceName, serialNumber, osName, osVersion, imei, storageTechnology, deviceType).mapTo[DeviceInfo]
 }
