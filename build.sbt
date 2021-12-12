@@ -1,5 +1,5 @@
 name         := "akka-scheduler-example"
-version      := "1.0.0-SNAPSHOT"
+version      := "1.1.0-SNAPSHOT"
 scalaVersion := "2.12.8"
 
 val akkaVer           = "2.5.20"
