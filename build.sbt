@@ -1,5 +1,5 @@
-name         := "akka-scheduler-example"
-version      := "0.1.0-SNAPSHOT"
+name         := "fasttack-scheduler"
+version      := "1.3.0-SNAPSHOT"
 scalaVersion := "2.12.8"
 
 val akkaVer           = "2.5.20"
