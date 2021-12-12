@@ -22,6 +22,7 @@ object DeviceInfoTaskService {
   val takeFindNumTask: Int = Environment.takeNumTask.toInt
   var seqSchedulerTask: Int = loadFromFile.toInt
   var seqSchedulerPerTask: Int = 0
+  var failureSchedulerPerTask: Int = 0
 }
 
 class DeviceInfoTaskService extends Actor with ActorLogging {
@@ -40,15 +41,13 @@ class DeviceInfoTaskService extends Actor with ActorLogging {
       // TODO: https://stackoverflow.com/questions/26357588/whats-the-difference-between-oncomplete-and-flatmap-of-future
       finalFuture onComplete {
         case Success(value) =>
-          if (
-            lengthDeviceInfo <= seqSchedulerTask
-              || Environment.maxPerTask.toInt < seqSchedulerPerTask
+          failureSchedulerPerTask = 0
+          if (lengthDeviceInfo <= seqSchedulerTask
+            || Environment.maxPerTask.toInt < seqSchedulerPerTask
           ) exit(0)
         case Failure(t) =>
-          if (
-            lengthDeviceInfo <= seqSchedulerTask
-              || Environment.maxPerTask.toInt < seqSchedulerPerTask
-          ) exit(1)
+          failureSchedulerPerTask += 1
+          if (Environment.failurePerTask.toInt < failureSchedulerPerTask) exit(1)
       }
   }
 

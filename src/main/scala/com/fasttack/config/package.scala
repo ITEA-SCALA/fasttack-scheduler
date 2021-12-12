@@ -25,6 +25,7 @@ package object config {
     expression: SchedulerExpressionConfig,
     saveAs: String,
     maxPerTask: Int,
+    failurePerTask: Int,
     takeNumTask: Int,
   )
 

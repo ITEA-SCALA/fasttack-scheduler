@@ -29,6 +29,9 @@ object Environment {
   def maxPerTask: String = Option("max-per-task")
     .getOrElse(appConfig.scheduler.maxPerTask.toString)
 
+  def failurePerTask: String = Option("failure-per-task")
+    .getOrElse(appConfig.scheduler.failurePerTask.toString)
+
   def takeNumTask: String = Option("take-num-task")
     .getOrElse(appConfig.scheduler.takeNumTask.toString)
 

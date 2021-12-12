@@ -24,7 +24,7 @@ object Main {
   type OptionMap = Map[Symbol, Any]
   val usage =
     """
-    Usage: SchedulerApp [--application-host str] [--application-port num] [--postgre-server-name str] [--postgre-port-number num] [--postgre-database-name str] [--postgre-user str] [--postgre-password str] [--max-per-task num] [--take-num-task num] filename
+    Usage: SchedulerApp [--application-host str] [--application-port num] [--postgre-server-name str] [--postgre-port-number num] [--postgre-database-name str] [--postgre-user str] [--postgre-password str] [--max-per-task num] [--failure-per-task num] [--take-num-task num] filename
     """
 
   private var postgreServerName: String   = ""
@@ -41,13 +41,14 @@ object Main {
     if (args.length == 0) log.info(usage)
     nextOption(Map(), args.toList)
     initPostgreUrl(postgreServerName, postgrePortNumber, postgreDatabaseName)
-    // TODO:  --application-port 8082 --postgre-server-name localhost --postgre-database-name postgres --postgre-user postgres --postgre-password postgres --max-per-task 10 --take-num-task 3
+    // TODO:  --application-port 8082 --postgre-server-name localhost --postgre-database-name postgres --postgre-user postgres --postgre-password postgres --max-per-task 16 --failure-per-task 3 --take-num-task 5
     log.debug(s"application-host = ${Environment.applicationHost}")         // TODO:  DEBUG
     log.debug(s"application-port = ${Environment.applicationPort}")         // TODO:  DEBUG
     log.debug(s"postgre-url      = ${JSystemProperty("postgre-url")}")      // TODO:  DEBUG
     log.debug(s"postgre-user     = ${JSystemProperty("postgre-user")}")     // TODO:  DEBUG
     log.debug(s"postgre-password = ${JSystemProperty("postgre-password")}") // TODO:  DEBUG
     log.debug(s"max-per-task     = ${Environment.maxPerTask}")              // TODO:  DEBUG
+    log.debug(s"failure-per-task = ${Environment.failurePerTask}")          // TODO:  DEBUG
     log.debug(s"take-num-task    = ${Environment.takeNumTask}")             // TODO:  DEBUG
 
     val deviceInfoRepository: DeviceInfoRepository = wire[DeviceInfoRepositoryPostgre]
@@ -55,7 +56,7 @@ object Main {
     val taskRepository: TaskRepository = wire[TaskRepositoryH2]
     val deviceInfoTaskRoute: DeviceInfoTaskRoute = wire[DeviceInfoTaskRoute]
 
-    tmpDeviceInfoRepository.prepareRepository()
+//    tmpDeviceInfoRepository.prepareRepository() // TODO: TmpDeviceInfo is manual create as SQL-Script
     taskRepository.prepareRepository()
 
     val routes: Route = pathPrefix("fasttack-scheduler-json") {
@@ -119,6 +120,9 @@ object Main {
       case "--max-per-task" :: value :: tail =>
         System.setProperty("max-per-task", value)
         nextOption(map ++ Map('maxPerTask -> value), tail)
+      case "--failure-per-task" :: value :: tail =>
+        System.setProperty("failure-per-task", value)
+        nextOption(map ++ Map('failurePerTask -> value), tail)
       case "--take-num-task" :: value :: tail =>
         System.setProperty("take-num-task", value)
         nextOption(map ++ Map('takeNumTask -> value), tail)
