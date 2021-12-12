@@ -1,4 +1,4 @@
-package com.example.config
+package com.fasttack.config
 
 import com.typesafe.config.{Config, ConfigFactory}
 import slick.jdbc.PostgresProfile.api._

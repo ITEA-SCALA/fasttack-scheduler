@@ -1,4 +1,4 @@
-package com.example.data
+package com.fasttack.data
 
 
 case class RequestDeviceInfo(

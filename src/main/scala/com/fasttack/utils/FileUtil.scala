@@ -1,6 +1,6 @@
-package com.example.utils
+package com.fasttack.utils
 
-import com.example.config.appConfig
+import com.fasttack.config.appConfig
 import java.io.{File, FileWriter}
 import scala.io.Source
 

@@ -1,10 +1,10 @@
-package com.example.routes
+package com.fasttack.routes
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.server.Route
-import com.example.data._
-import com.example.repository._
+import com.fasttack.data._
+import com.fasttack.repository._
 
 
 class DeviceInfoTaskRoute(repository: TaskRepository) extends SprayJsonSupport {

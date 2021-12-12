@@ -1,15 +1,15 @@
-package com.example.service
+package com.fasttack.service
 
 import akka.actor.{Actor, ActorLogging, Props}
-import com.example.data._
-import com.example.repository._
+import com.fasttack.data._
+import com.fasttack.repository._
 import java.time._
 import akka.pattern.pipe
-import com.example.config.Environment
-import com.example.routes._
-import com.example.utils.FileUtil.saveToFile
-import com.example.utils.FileUtil.loadFromFile
-import com.example.utils.Base64UrlValidUtil
+import com.fasttack.config.Environment
+import com.fasttack.routes._
+import com.fasttack.utils.FileUtil.saveToFile
+import com.fasttack.utils.FileUtil.loadFromFile
+import com.fasttack.utils.Base64UrlValidUtil
 import java.sql.Timestamp
 import scala.concurrent.Future
 import scala.sys.exit

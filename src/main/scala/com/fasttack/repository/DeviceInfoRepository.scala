@@ -1,6 +1,6 @@
-package com.example.repository
+package com.fasttack.repository
 
-import com.example.data._
+import com.fasttack.data._
 import scala.concurrent.Future
 
 

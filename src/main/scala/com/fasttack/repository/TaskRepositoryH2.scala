@@ -1,7 +1,7 @@
-package com.example.repository
+package com.fasttack.repository
 
-import com.example.config._
-import com.example.data._
+import com.fasttack.config._
+import com.fasttack.data._
 import slick.driver.H2Driver.api._
 import slick.lifted.ProvenShape
 import java.sql.Timestamp

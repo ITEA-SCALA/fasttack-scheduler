@@ -1,4 +1,4 @@
-package com.example.utils;
+package com.fasttack.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;

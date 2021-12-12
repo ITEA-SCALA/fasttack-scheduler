@@ -1,4 +1,4 @@
-package com.example
+package com.fasttack
 
 import com.typesafe.config.{Config, ConfigFactory}
 import pureconfig.loadConfigOrThrow

@@ -1,4 +1,4 @@
-package com.example
+package com.fasttack
 
 
 package object data {

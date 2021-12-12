@@ -1,25 +1,25 @@
-package com.example
+package com.fasttack
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
-import com.example.repository._
-import com.example.routes._
+import com.fasttack.repository._
+import com.fasttack.routes._
 import org.slf4j.LoggerFactory
 import scala.concurrent.{ExecutionContext, Future}
 import com.softwaremill.macwire.wire
-import com.example.config.{Environment, actorSystemName, appConfig}
+import com.fasttack.config.{Environment, actorSystemName, appConfig}
 import com.typesafe.akka.extension.quartz.QuartzSchedulerExtension
-import com.example.service.DeviceInfoTaskService
-import com.example.service.DeviceInfoTaskService.FixBase64Decode
+import com.fasttack.service.DeviceInfoTaskService
+import com.fasttack.service.DeviceInfoTaskService.FixBase64Decode
 import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.lang.System.{getProperty => JSystemProperty}
 
 
-object SchedulerApp {
+object Main {
 
   type OptionMap = Map[Symbol, Any]
   val usage =

@@ -1,6 +1,6 @@
-package com.example
+package com.fasttack
 
-import com.example.utils.Base64UrlValidUtil
+import com.fasttack.utils.Base64UrlValidUtil
 
 object Test2App extends App {
 

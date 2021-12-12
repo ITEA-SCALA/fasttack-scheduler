@@ -1,7 +1,7 @@
-package com.example.repository
+package com.fasttack.repository
 
-import com.example.config.Environment
-import com.example.data._
+import com.fasttack.config.Environment
+import com.fasttack.data._
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.ProvenShape
 import scala.concurrent.{ExecutionContext, Future}

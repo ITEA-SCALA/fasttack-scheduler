@@ -1,6 +1,6 @@
-package com.example
+package com.fasttack
 
-import com.example.data._
+import com.fasttack.data._
 import spray.json.{DefaultJsonProtocol, DeserializationException, JsNumber, JsString, JsValue, JsonFormat, RootJsonFormat}
 import java.sql.Timestamp
 

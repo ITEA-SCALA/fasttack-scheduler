@@ -1,6 +1,6 @@
-package com.example
+package com.fasttack
 
-import com.example.utils.Base64UrlUtil
+import com.fasttack.utils.Base64UrlUtil
 
 object Test1App extends App {
   //  val text = "This is plaintext."

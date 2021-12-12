@@ -1,6 +1,6 @@
-package com.example.utils
+package com.fasttack.utils
 
-import com.example.data.DecodeAction
+import com.fasttack.data.DecodeAction
 
 object Base64UrlValidUtil {
 
