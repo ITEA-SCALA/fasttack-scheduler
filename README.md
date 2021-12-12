@@ -79,7 +79,7 @@ FT должен декодировать значение deviceName получ�
 
 2. Change directory into your clone:
 
-        $ cd akka-scheduler-example
+        $ cd fasttack-scheduler
 
 3. Launch SBT:
 
