@@ -17,7 +17,7 @@ class TmpDeviceInfoRepositoryPostgre(implicit ec: ExecutionContext)
 
   override def list = postgreDB.run {
     entity
-      .sortBy(_.tokenRefId)
+      .sortBy(_.tokenRefId.asc)
       .result
   }
 
@@ -31,7 +31,7 @@ class TmpDeviceInfoRepositoryPostgre(implicit ec: ExecutionContext)
       entity
         .drop(dropNum)
         .take(takeNum)
-        .sortBy(_.tokenRefId)
+        .sortBy(_.tokenRefId.asc)
         .result
     }
   }

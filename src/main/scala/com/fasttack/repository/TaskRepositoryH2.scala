@@ -16,7 +16,7 @@ class TaskRepositoryH2(implicit ec: ExecutionContext)
 
   override def list = h2DB.run {
     entity
-      .sortBy(_.id)
+      .sortBy(_.id.asc)
       .result
   }
 
